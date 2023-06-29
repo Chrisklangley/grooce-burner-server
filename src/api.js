@@ -1,5 +1,3 @@
-// YOUR_BASE_DIRECTORY/netlify/functions/api.js
-
 import express from "express";
 import serverless from "serverless-http";
 
