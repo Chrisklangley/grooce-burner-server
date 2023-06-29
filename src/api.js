@@ -1,5 +1,5 @@
-import express from "express";
-import serverless from "serverless-http";
+const express = require("express");
+const serverless = require("serverless-http");
 
 const api = express();
 
@@ -11,5 +11,8 @@ router.get("/hello", (req, res) => {
 });
 
 api.use("/api/", router);
+const PORT = 9001;
 
-export const handler = serverless(api);
+api.listen(PORT, () => console.log(`running on ${PORT}`));
+
+module.exports.handler = serverless(api);
