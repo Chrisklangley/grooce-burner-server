@@ -5,16 +5,15 @@
   "main": "api.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "NODE_ENV=development ./node_modules/.bin/netlify-lambda serve src",
-    "build": "netlify-lambda build src",
-    "nodemon": "nodemon src/api.js"
+    "build": "netlify deploy --prod",
+    "nodemon": "nodemon functions/api.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "epxress": "^0.0.1-security",
     "express": "^4.18.2",
+    "netlify-cli": "^15.7.0",
     "netlify-lambda": "^2.0.16",
     "nodemon": "^2.0.22",
     "serverless-http": "^3.2.0"
