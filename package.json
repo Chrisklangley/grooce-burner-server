@@ -6,7 +6,6 @@
   "scripts": {
     "start": "node api.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npm run build",
     "nodemon": "nodemon api.js"
   },
   "keywords": [],
