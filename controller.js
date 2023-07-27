@@ -1,53 +1,36 @@
 require("dotenv").config();
-const { CONNECTION_STRING, SECRET, CLIENT_ID, CLIENT_SECRET } = process.env;
-const Sequelize = require("sequelize");
+const { SECRET, MONGODB_CONNECTION } = process.env;
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const cloudinary = require("./Utils/cloudinary");
+const mongoose = require("mongoose");
 
-const sequelize = new Sequelize(CONNECTION_STRING, {
-  dialect: "postgres",
-  dialectOptions: {
-    ssl: {
-      rejectUnauthorized: false,
-    },
-  },
-});
+const User = require("./Schemas/users");
+const GrooveList = require("./Schemas/grooveList");
+const GrooveListInfo = require("./Schemas/grooveListInfo");
+mongoose.connect(MONGODB_CONNECTION);
 
 const getCover = (req, res) => {
   const { email } = req.params;
-  sequelize
-    .query(
-      `
-  SELECT groovelist_title, groovelist_img
-  FROM groovelistInfo
-  WHERE user_email = '${email}';
-
-
-  `
-    )
-    .then((user) => {
-      const content = user[0][0];
-      res.status(200).send(content);
+  GrooveListInfo.findOne({ userEmail: email })
+    .then((info) => {
+      res.status(200).send(info);
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({ error: "An error occurred" });
+    });
 };
 
 const getTrackList = (req, res) => {
   const { email } = req.params;
-  sequelize
-    .query(
-      `SELECT  groovelist_id, groovelist_song
-  From groovelist 
-  WHERE user_email = '${email}';
-  `
-    )
+  GrooveList.find({ email: email })
     .then((songs) => {
-      const songList = songs[0];
-      res.status(200).send(songList);
+      res.status(200).send(songs);
     })
     .catch((err) => {
-      console.error(err);
+      console.log(err);
+      res.status(500).json({ error: "An error occurred" });
     });
 };
 
@@ -56,21 +39,20 @@ const addCover = async (req, res) => {
   console.log(title, email);
 
   const addDetails = (url) => {
-    sequelize
-      .query(
-        `
-       
+    const info = new GrooveListInfo({
+      title: title,
+      img: url,
+      userEmail: email,
+    });
 
-  INSERT INTO groovelistInfo (groovelist_title, groovelist_img,  user_email)
-  VALUES('${title}', '${url}','${email}');
-
-  `
-      )
+    info
+      .save()
       .then(() => {
         res.sendStatus(200);
       })
       .catch((err) => {
         console.log(err);
+        res.status(500).json({ error: "An error occurred" });
       });
   };
 
@@ -80,89 +62,78 @@ const addCover = async (req, res) => {
     });
     const imgUrl = uploaderResponse.url;
     addDetails(imgUrl);
-  } catch (error) {}
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "An error occurred" });
+  }
 };
 
 const getTotal = (req, res) => {
   const { email } = req.params;
-
-  sequelize
-    .query(
-      `SELECT SUM(price)
-    FROM groovelist
-    WHERE user_email = '${email}';
-    `
-    )
-    .then((sum) => {
-      const total = sum[0][0];
-      res.status(200).send(total);
+  GrooveList.aggregate([
+    { $match: { email: email } },
+    { $group: { _id: null, total: { $sum: "$price" } } },
+  ])
+    .then((result) => {
+      const total = result.length > 0 ? result[0].total : 0;
+      res.status(200).send({ total });
     })
     .catch((err) => {
       console.log(err);
+      res.status(500).json({ error: "An error occurred" });
     });
 };
 
 const deleteSong = (req, res) => {
   const { songId, email } = req.params;
 
-  sequelize
-    .query(
-      `
-   DELETE FROM groovelist WHERE groovelist_id ='${songId}';
-
-   SELECT  groovelist_id, groovelist_song
-  From groovelist 
-  WHERE user_email = '${email}';
-
-
-
-
-   `
-    )
-    .then((songs) => {
-      const songList = songs[0];
-      res.status(200).send(songList);
+  GrooveList.findByIdAndDelete(songId)
+    .then(() => {
+      GrooveList.find({ email: email })
+        .then((songs) => {
+          res.status(200).send(songs);
+        })
+        .catch((err) => {
+          console.log(err);
+          res.status(500).json({ error: "An error occurred" });
+        });
     })
     .catch((err) => {
-      console.error(err);
+      console.log(err);
+      res.status(500).json({ error: "An error occurred" });
     });
 };
 
 const getSongs = (req, res) => {
   const { email } = req.body;
-  sequelize
-    .query(
-      `SELECT  groovelist_id, groovelist_song
-  From groovelist 
-  WHERE user_email = '${email}';
-  `
-    )
+  GrooveList.find({ email: email })
     .then((songs) => {
-      const songList = songs[0];
-      res.status(200).send(songList);
+      res.status(200).send(songs);
     })
     .catch((err) => {
-      console.error(err);
+      console.log(err);
+      res.status(500).json({ error: "An error occurred" });
     });
 };
 
 const addSong = (req, res) => {
   const { clicked, email } = req.body;
 
-  sequelize
-    .query(
-      `
-    
-    INSERT INTO groovelist(groovelist_song, price, user_email)
-      VALUES('${clicked}', 2.25, '${email}');
+  const song = new GrooveList({
+    song: clicked,
+    price: 2.25,
+    email: email,
+  });
 
-
-    `
-    )
+  song
+    .save()
     .then(() => {
       res.sendStatus(200);
     })
-    .catch((err) => console.error(err));
+    .catch((err) => {
+      console.error(err);
+      res.status(500).json({ error: "An error occurred" });
+    });
 };
 
 const login = (req, res) => {
@@ -174,15 +145,8 @@ const login = (req, res) => {
   const salt = bcrypt.genSaltSync(10);
   const hash = bcrypt.hashSync(password, salt);
 
-  sequelize
-    .query(
-      `
-    SELECT email, password
-    FROM users
-    WHERE email = '${email}' AND password = '${hash}';`
-    )
+  User.findOne({ email: email, password: hash })
     .then((user) => {
-      user = user[0][0];
       if (!user) {
         return res.status(401).send("User not found");
       }
@@ -191,35 +155,40 @@ const login = (req, res) => {
     })
     .catch((err) => {
       console.error(err);
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: "An error occurred" });
     });
 };
 
-const register = (req, res) => {
-  const { username, email, password } = req.body;
+const register = async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
 
-  const payload = { username, email };
+    const payload = { username, email };
 
-  const token = jwt.sign(payload, SECRET);
+    const token = jwt.sign(payload, SECRET);
 
-  const salt = bcrypt.genSaltSync(10);
-  const hash = bcrypt.hashSync(password, salt);
+    const salt = bcrypt.genSaltSync(10);
+    const hash = bcrypt.hashSync(password, salt);
 
-  sequelize
-    .query(
-      `
-  INSERT INTO users(user_name, email, password)
-  VALUES('${username}', '${email}', '${hash}');
-
-  `
-    )
-    .then((result) => {
-      res.json({ token, email, username });
-    })
-    .catch((err) => {
-      console.error(err);
-      res.status(500).json({ error: err.message });
+    const user = new User({
+      userName: username,
+      email: email,
+      password: hash,
     });
+
+    user
+      .save()
+      .then(() => {
+        res.json({ token, email, username });
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).json({ error: "An error occurred" });
+      });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "An error occurred" });
+  }
 };
 
 module.exports = {
