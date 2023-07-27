@@ -3,7 +3,7 @@ const serverless = require("serverless-http");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const router = express.Router();
-
+const uri = process.env.MONGODB_URI;
 const api = express();
 api.use(bodyParser.json({ limit: "60mb" }));
 api.use(bodyParser.urlencoded({ limit: "60mb", extended: true }));
