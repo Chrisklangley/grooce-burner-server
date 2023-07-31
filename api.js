@@ -28,7 +28,9 @@ const corsOptions = {
 
 api.use(cors(corsOptions));
 
-const dbURI = process.env.MONGODB_URI;
+const dbURI =
+  process.env.MONGODB_URI ||
+  "mongodb+srv://christopherlangleydev:Dq8XRo8Gh7K3ErCq@groverburnerdb.odla6k1.mongodb.net/";
 mongoose
   .connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
