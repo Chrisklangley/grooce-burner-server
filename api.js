@@ -26,7 +26,7 @@ const corsOptions = {
 };
 
 api.use(cors(corsOptions));
-
+// safd
 const dbURI = process.env.MONGODB_URI;
 mongoose
   .connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
