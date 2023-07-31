@@ -14,6 +14,18 @@ const corsOptions = {
   origin: "http://localhost:3000",
 };
 
+const mongoose = require("mongoose");
+const dbURI = uri;
+
+mongoose
+  .connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    console.log("Connected to MongoDB!");
+  })
+  .catch((err) => {
+    console.error("Error connecting to MongoDB:", err);
+  });
+
 api.use(cors(corsOptions));
 const { seedDB } = require("./Utils/seed");
 const {
