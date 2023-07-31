@@ -21,6 +21,11 @@ api.use(bodyParser.json({ limit: "60mb" }));
 api.use(bodyParser.urlencoded({ limit: "60mb", extended: true }));
 
 api.use(cors());
+const corsOptions = {
+  origin: "http://localhost:3000",
+};
+
+api.use(cors(corsOptions));
 
 // MongoDB connection
 const dbURI = process.env.MONGODB_URI;
