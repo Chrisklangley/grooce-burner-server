@@ -27,7 +27,6 @@ const corsOptions = {
 
 api.use(cors(corsOptions));
 
-// MongoDB connection
 const dbURI = process.env.MONGODB_URI;
 mongoose
   .connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
