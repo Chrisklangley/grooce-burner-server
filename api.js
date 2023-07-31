@@ -2,31 +2,7 @@ const express = require("express");
 const serverless = require("serverless-http");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const router = express.Router();
-const uri = process.env.MONGODB_URI;
-const api = express();
-api.use(bodyParser.json({ limit: "60mb" }));
-api.use(bodyParser.urlencoded({ limit: "60mb", extended: true }));
-
-api.use(cors());
-api.use(express.json());
-const corsOptions = {
-  origin: "http://localhost:3000",
-};
-
 const mongoose = require("mongoose");
-const dbURI = uri;
-
-mongoose
-  .connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => {
-    console.log("Connected to MongoDB!");
-  })
-  .catch((err) => {
-    console.error("Error connecting to MongoDB:", err);
-  });
-
-api.use(cors(corsOptions));
 const { seedDB } = require("./Utils/seed");
 const {
   login,
@@ -40,11 +16,31 @@ const {
   getTrackList,
 } = require("./controller");
 
+const api = express();
+api.use(bodyParser.json({ limit: "60mb" }));
+api.use(bodyParser.urlencoded({ limit: "60mb", extended: true }));
+
+api.use(cors());
+
+// MongoDB connection
+const dbURI = process.env.MONGODB_URI;
+mongoose
+  .connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    console.log("Connected to MongoDB!");
+  })
+  .catch((err) => {
+    console.error("Error connecting to MongoDB:", err);
+  });
+
+const router = express.Router();
+
 router.get("/getTotal/:email", getTotal);
 router.get("/getCover/:email", getCover);
 router.get("/getTrackList/:email", getTrackList);
+
 router.get("/", (req, res) => {
-  res.json({ message: "welcome to the Groove Burner Server" });
+  res.json({ message: "Welcome to the Groove Burner Server" });
 });
 
 router.post("/getSongs", getSongs);
@@ -55,14 +51,21 @@ router.post("/addSong", addSong);
 router.post("/addCover/Title/:title/:email", addCover);
 
 router.delete("/deleteSong/:songId/:email", deleteSong);
+
 router.get("/test", (req, res) => {
   res.status(200).send("Success");
 });
 
 api.use("/", router);
 api.use("/.netlify/functions/api", router);
-const PORT = process.env.PORT || 54783;
-console.log(process.env.PORT);
 
-api.listen(PORT, () => console.log(`listening on ${PORT}`));
+const PORT = process.env.PORT || 54783;
+console.log(`Listening on port ${PORT}`);
+
+// Start the server
+api.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
+
+// Export the serverless handler if needed
 module.exports.handler = serverless(api);
