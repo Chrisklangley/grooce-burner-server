@@ -38,34 +38,21 @@ const addCover = async (req, res) => {
   const { title, email } = req.params;
   console.log(title, email);
 
-  const addDetails = (url) => {
-    const info = new GrooveListInfo({
-      title: title,
-      img: url,
-      userEmail: email,
-    });
+  const info = new GrooveListInfo({
+    title: title,
+    img: "https://res.cloudinary.com/grooveburner/image/upload/v1690770009/kf0pd0a4pg4zsw78re5n.jpg",
+    userEmail: email,
+  });
 
-    info
-      .save()
-      .then(() => {
-        res.sendStatus(200);
-      })
-      .catch((err) => {
-        console.log(err);
-        res.status(500).json({ error: "An error occurred" });
-      });
-  };
-
-  try {
-    const uploaderResponse = await cloudinary.uploader.upload(req.body.data, {
-      folder: "newFolder",
+  info
+    .save()
+    .then(() => {
+      res.sendStatus(200);
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({ error: "An error occurred" });
     });
-    const imgUrl = uploaderResponse.url;
-    addDetails(imgUrl);
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "An error occurred" });
-  }
 };
 
 const getTotal = (req, res) => {
